@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<!--title-->
+<title>Leaflet Quick Start Guide Example</title>
+<!--Link to Leaflet CSS document-->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+<!--Link to Leaflet JS API-->
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+
+<!--Link to external text file mapCountries -->
+<script type="text/javascript" src="mapCountries.js"></script>
+    
+<!--Styling document elements, declaring the map to fill the entire page-->
+
+
+<style type="text/css">
+html { height: 100% }
+body { height: 100%; margin: 0; padding: 0 }
+#mapid { width: 100%; height: 100%}
+
+.info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
+.info h4 {
+    margin: 0 0 5px;
+    color: #777;
+}
+
+
+</style>
+</head>
+<body>
+ 
+
+<!--Declare map div container to place the map inside on the page-->
+<div id="mapid"></div>
+ 
+
+<!--Javascript map functions-->
+<script>
+
+var southWest = L.latLng(-75, -185),
+northEast = L.latLng(125, 185),
+bounds = L.latLngBounds(southWest, northEast);
+            
+            
+// initialize Leaflet
+//center: {lat: 26.4, lng: 115.1},
+map = L.map('mapid', {
+    zoomSnap: 0.01
+}).setView({lon: 10, lat: 30}, 2.5);
+              
+layerGroup = L.layerGroup().addTo(map);
+layerGroup2 = L.layerGroup().addTo(map);
+layerGroup3 = L.layerGroup().addTo(map);
+
+
+// This example uses custom tiles taken from https://leaflet-extras.github.io/leaflet-providers/preview/
+var Stamen_Watercolor = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.{ext}', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    subdomains: 'abcd',
+    minZoom: 2.5,
+    maxZoom: 16,
+    ext: 'jpg'
+}).addTo(map);
+
+
+//map.setMaxBounds(map.getBounds());
+map.setMaxBounds(bounds);
+
+
+L.geoJson(mapCountries).addTo(map);
+
+
+
+function style(feature) {
+    return {
+        fillColor: '#33a02c',
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.2
+    };
+}
+
+L.geoJson(mapCountries, {style: style}).addTo(map);
+
+function highlightFeature(e) {
+    var layer = e.target;
+    
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.1
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+
+    info.update(layer.feature.properties);
+    }
+}
+
+function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+    info.update();
+}
+
+var geojson;
+// ... our listeners
+geojson = L.geoJson(mapCountries);
+
+function zoomToFeature(e) {
+    map.fitBounds(e.target.getBounds());
+}
+
+
+function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
+}
+
+
+geojson = L.geoJson(mapCountries, {
+    style: style,
+    onEachFeature: onEachFeature
+}).addTo(map);
+
+ 
+
+var info = L.control();
+
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+    this.update();
+    
+    return this._div;
+};
+
+// method that we will use to update the control based on feature properties passed
+info.update = function (props) {
+    this._div.innerHTML = '<h4>Country </h4>' +  (props ?  '<img src="' + props.Flag + '" width="140" height="85">' + '</b><br/>'+ '<b>' + props.country +  '</b><br/>' + 'Region: ' + props.SUBREGION + '</b><br/>' + 'Population: ' + (props.pop1/1000000).toFixed(2) + ' Million' +'<br/>' + 'Area: '+ props.Area_km + ' square km' + '</b><br/>' + 'Urban Portion: ' + props.Urban + '%'  : 'Hover over a Country'); 
+};  
+info.addTo(map);
+
+
+
+</script>
+</body>
+</html>

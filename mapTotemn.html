@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<!--title-->
+<title>Leaflet Quick Start Guide Example</title>
+<!--Link to Leaflet CSS document-->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+<!--Link to Leaflet JS API-->
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+
+<!--Link to external text file mapCountries -->
+<script type="text/javascript" src="mapCountries.js"></script>
+
+<!--Link to external text file mapCountries -->
+<script type="text/javascript" src="citiesPopup.js"></script>
+
+
+<!-- Link to jQuery Toolkit-->
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    
+<!--Styling document elements, declaring the map to fill the entire page-->
+
+
+<style type="text/css">
+html { height: 100% }
+body { height: 100%; margin: 0; padding: 0 }
+#mapid { width: 100%; height: 100%}
+
+.info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+}
+
+.info h4 {
+    margin: 0 0 5px;
+    color: #777;
+}
+
+
+</style>
+</head>
+<body>
+ 
+
+<!--Declare map div container to place the map inside on the page-->
+<div id="mapid"></div>
+ 
+
+<!--Javascript map functions-->
+<script>
+
+var southWest = L.latLng(-75, -185),
+northEast = L.latLng(125, 185),
+bounds = L.latLngBounds(southWest, northEast);
+            
+            
+// initialize Leaflet
+//center: {lat: 26.4, lng: 115.1},
+map = L.map('mapid', {
+    zoomSnap: 0.01
+}).setView({lon: 10, lat: 30}, 2.5);
+
+              
+layerGroup = L.layerGroup().addTo(map);
+layerGroup2 = L.layerGroup().addTo(map);
+layerGroup3 = L.layerGroup().addTo(map);
+
+// This cities uses custom tiles taken from https://leaflet-extras.github.io/leaflet-providers/preview/
+
+var CloseUp_Map2 =L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+minZoom: 2.5,
+maxZoom: 18,
+attribution: '&copy; <Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+}).addTo(map);
+
+
+var Far_Map = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.{ext}', {
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    subdomains: 'abcd',
+    minZoom: 2.5,
+    maxZoom: 6.5,
+    ext: 'jpg'
+}).addTo(map);
+
+var Far_Map2 = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri &mdash; Source: US National Park Service',
+    minZoom: 2.5,
+    maxZoom: 6.5});
+ 
+
+//map.setMaxBounds(map.getBounds());
+map.setMaxBounds(bounds);
+
+L.Control.Mntitle = L.Control.extend({
+    onAdd: function(map) {
+        var img = L.DomUtil.create('img');
+
+        img.src = 'C:/Kevin Agyemfra/TOTEMN/Map Files/mapnation title.png';
+        img.style.width = '200px';
+
+        return img;
+    },
+
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+});
+
+L.control.Mntitle = function(opts) {
+    return new L.Control.Mntitle(opts);
+}
+
+L.control.Mntitle({ position: 'topright' }).addTo(map);
+
+ 
+
+L.geoJson(mapCountries).addTo(map);
+
+
+function style(feature) {
+    return {
+        fillColor: '#33a02c',
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.2
+    };
+}
+
+L.geoJson(mapCountries, {style: style}).addTo(map);
+
+function highlightFeature(e) {
+    var layer = e.target;
+    
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.1
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+
+    info.update(layer.feature.properties);
+    }
+}
+
+function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+    info.update();
+}
+
+var geojson;
+// ... our listeners
+geojson = L.geoJson(mapCountries);
+
+function zoomToFeature(e) {
+    map.fitBounds(e.target.getBounds());
+}
+
+
+function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
+}
+
+geojson = L.geoJson(mapCountries, {
+    style: style,
+    onEachFeature: onEachFeature,
+}).addTo(map);
+
+
+
+var info = L.control({ position: 'bottomleft' });
+
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+    this.update();
+    
+    return this._div;
+};
+
+// method that we will use to update the control based on feature properties passed
+info.update = function (props) {
+    this._div.innerHTML = '<h4>Country </h4>' +  (props ?  '<img src="' + props.Flag + '" width="140" height="85">' + '</b><br/>'+ '<b>' + props.country +  '</b><br/>' + 'Region: ' + props.SUBREGION + '</b><br/>' + 'Population: ' + (props.pop1/1000000).toFixed(2) + ' Million' +'<br/>' + 'Area: '+ props.Area_km + ' square km' + '</b><br/>' + 'Urban Portion: ' + props.Urban + '%'  : 'Hover over a Country'); 
+};  
+info.addTo(map);
+
+
+var cities = L.layerGroup([toronto, newYork, mexicoCity, losAngeles, chicago, washington, sanFrancisco, boston, philadelphia, dallas, houston, miami, atlanta, detroit, monterrey, guadalajara, sanDiego, phoenix, seattle, tampa, montreal, puebla, santoDomingo, denver, orlando, portauPrince, guatemalaCity, minneapolis, cleveland, vancouver, cincinnati, elPaso, juarezCity, saltLakeCity, charlotte, portland, richmond, stLouis, lasVegas, sanAntonio, havana, leon, sacramento, indianapolis, pittsburgh, austin, kansasCity, sanJuan, sanSalvador, columbus, saoPaulo, buenosAires, riodeJaneiro, lima, bogota, santiago, beloHorizonte, caracas, portoAlegre, brasilia, fortaleza, salvador, recife, medellin, curitiba, campinas, guayaquil, cali, quito, maracaibo, manaus, asuncion, cucuta, goiania, belem, montevideo, barranquilla, santaCruz, vitoria, laPaz, valencia, saoLuis, cordoba, natal, calgary, barquisimeto, edmonton, ottawa, cartagena, jacksonville, nashville, memphis, oklahomaCity, milwaukee, newOrleans, honolulu, buffalo, louisville, albuquerque, anchorage, queretaro, toluca, cochabamba, kingston, mendoza, winnipeg, raleigh, joaoPessoa, rosario, maceio, arequipa, maracay, florianopolis, santos, teresina, bordeaux, tijuana, sanPedroSula, virginiaBeach, sanJose, tegucigalpa, managua, panamaCity, bucaramanga, merida, moscow, istanbul, london, paris, madrid, milan, barcelona, athens, saintPetersburg, berlin, rome, lisbon, kyiv, birmingham, naples, manchester, bucharest, brussels, minsk, belgrade, hamburg, warsaw, budapest, vienna, turin, dortmund, rotterdam, leeds, stockholm, munich, amsterdam, stuttgart, frankfurt, cologne, valencia, kharkiv, lyon, marseille, glasgow, copenhagen, prague, dnipro, liverpool, sevilla, sofia, porto, zurich, oslo, helsinki, dublin, tirane, toulouse, sheffield, novosibirsk, sarajevo, zagreb, samara, tallin, konya, reykjavik, izmir, bursa, riga, adana, vilnius, luxembourg, lille, chisinau, omsk, podgorica, skopje, slovenia, bratislava, ankara, geneve, lagos, cairo, algiers, casablanca, kinshasa, brazzaville, johannesburg, daresSalaam, abidjan, khartoum, alexandria, capeTown, kano, dakar, addisAbaba, douala, durban, ouagadougou, accra, luanda, bamako, dubai, portHarcourt, kumasi, lusaka, mogadishu, abuja, niamey, harare, nairobi, kampala, tripoli, maputo, bujumbura, monrovia, antananarivo, freetown, tunis, conakry, beninCity, kigali, rabat, mombasa, bangui, ndjamena, benguela, cotonou, lome, juba, asmera, nouakchott, windhoek, gaborone, pointeNoire, ibadan, libreville, bissau, abuDhabi, lilongwe, banjul, djibouti, lubumbashi, praia, mbujiMayi, yaounde, sydney, melbourne, brisbane, perth, auckland, adelaide, canberra, georgetown, paramaribo, portElizabeth, tokyo, jakarta, delhi, mumbai, seoul, shanghai, manila, karachi, beijing, guangzhou, osaka, dacca, bangkok, kolkata, tehran, chongqing, tianjin, shenyang, chengdu, bangalore, lahore, nagoya, saigon, madras, taipei, hangzhou, wuhan, hanoi, kualaLumpur, hongKong, baghdad, singapore, riyadh, kabul, manama, thimphu, bandarSeriBegawan, dili, jerusalem, telAviv, amman, kuwaitCity, bishkek, vientiane, beirut, phnomPenh, ulanBator, rangoon, kathmandu, pyongyang, muscat, makassar, gaza, doha, colombo, damascus, ashgabat, chittagong, tashkent, sanaa, mecca, medan, meshed, surabaya, surat, yerevan, baku, tbilisi, nurSultan, almaAta, ahmedabad, hyderabad, bandung, dushanbe, sapporo]);
+
+var baseMaps = {
+    "Far_Map": Far_Map,
+    "Far_Map2": Far_Map2
+};
+
+var overlayMaps = {
+    "Cities": cities
+};
+
+L.control.layers(baseMaps, overlayMaps).addTo(map);
+  
+
+</script>
+</body>
+</html>
